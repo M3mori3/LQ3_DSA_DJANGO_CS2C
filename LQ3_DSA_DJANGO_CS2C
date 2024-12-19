@@ -1,0 +1,183 @@
+// Data storage
+const users = { // Stores usernames and passwords for authentication
+    mori: "5544", 
+    mark: "3344" 
+};
+
+const buses = [ // Stores buses with destinations and seats available
+    { id: 1, destination: "Cubao", seats: Array(30).fill(null) }, // Bus 1 with 30 seats initialized as empty
+    { id: 2, destination: "Baguio", seats: Array(30).fill(null) }, // Bus 2 with 30 seats initialized as empty
+    { id: 3, destination: "Pasay", seats: Array(30).fill(null) }  // Bus 3 with 30 seats initialized as empty
+];
+
+let currentUser = null; // Tracks the currently logged-in user
+
+// Function to authenticate user credentials
+function authenticate(user, password) {
+    return users[user] === password; // Verifies if the provided username and password match
+}
+
+// Function to display all buses with available seat count
+function displayBuses() {
+    console.log("Available Buses:");
+    buses.forEach(bus => {
+        console.log(`${bus.id}. ${bus.destination} - ${bus.seats.filter(seat => seat === null).length} Available Seats`); // Logs bus details with available seats
+    });
+}
+
+// Function to display seats of a specific bus
+function displayBusSeats(bus) {
+    console.log(`\nBus: ${bus.destination}`); // Logs the bus destination
+    bus.seats.forEach((seat, index) => {
+        console.log(`Seat ${index + 1}: ${seat || "AVAILABLE"}`); // Logs seat status (available or reserved)
+    });
+}
+
+// Function to handle bus management by ticket person
+function manageBus(busId) {
+    const bus = buses.find(b => b.id === busId); // Finds the bus by ID
+    let action;
+    do {
+        action = prompt("Choose action: ADD, REMOVE, or BACK").toUpperCase(); // Prompts for action
+        switch (action) {
+            case "ADD":
+                addReservation(bus); // Calls function to add a reservation
+                break;
+            case "REMOVE":
+                removeReservation(bus); // Calls function to remove a reservation
+                break;
+        }
+    } while (action !== "BACK"); // Loops until the user selects "BACK"
+    alert("Successfully managed the bus!");
+}
+
+// Function to add a reservation to a bus
+function addReservation(bus) {
+    const freeSeats = bus.seats.map((seat, index) => seat === null ? index + 1 : null).filter(seat => seat !== null); // Finds available seats
+    if (freeSeats.length === 0) {
+        console.log("No available seats."); // Alerts if no seats are available
+        return;
+    }
+    console.log("Available seats: " + freeSeats.join(", ")); // Lists available seats
+    const seatNumber = parseInt(prompt("Enter seat number to reserve:"), 10); // Prompts for seat number
+    if (freeSeats.includes(seatNumber)) {
+        bus.seats[seatNumber - 1] = prompt("Enter customer name:"); // Reserves the seat for the customer
+        alert("Reservation confirmed.");
+    } else {
+        console.log("Invalid seat number."); // Alerts if seat number is invalid
+    }
+}
+
+// Function to remove a reservation from a bus
+function removeReservation(bus) {
+    console.log("Reserved seats:"); // Lists reserved seats
+    bus.seats.forEach((seat, index) => {
+        if (seat !== null) {
+            console.log(`Seat ${index + 1}: ${seat}`); // Logs reserved seat details
+        }
+    });
+    const seatNumber = parseInt(prompt("Enter seat number to cancel reservation:"), 10); // Prompts for seat number
+    if (bus.seats[seatNumber - 1] !== null) {
+        if (confirm("Are you sure you want to cancel this reservation?")) { // Confirms cancellation
+            bus.seats[seatNumber - 1] = null; // Cancels the reservation
+            alert("Reservation cancelled.");
+        }
+    } else {
+        console.log("Invalid seat number."); // Alerts if seat number is invalid
+    }
+}
+
+// Function to handle customer actions
+function customer() {
+    let action;
+    do {
+        action = prompt("Choose action: RESERVE, CANCEL, or EXIT").toUpperCase(); // Prompts for action
+        switch (action) {
+            case "RESERVE":
+                reserveSeat(); // Reserves a seat
+                break;
+            case "CANCEL":
+                cancelReservation(); // Cancels a reservation
+                break;
+        }
+    } while (action !== "EXIT"); // Loops until the user selects "EXIT"
+    alert("Thank you! Returning to the main menu.");
+}
+
+// Function to reserve a seat
+function reserveSeat() {
+    displayBuses(); // Displays all buses
+    const busId = parseInt(prompt("Select bus ID:"), 10); // Prompts for bus ID
+    const bus = buses.find(b => b.id === busId); // Finds the selected bus
+    if (!bus) {
+        console.log("Invalid bus ID."); // Alerts if bus ID is invalid
+        return;
+    }
+    displayBusSeats(bus); // Displays seats for the selected bus
+    const seatNumber = parseInt(prompt("Enter seat number to reserve:"), 10); // Prompts for seat number
+    if (bus.seats[seatNumber - 1] === null) {
+        bus.seats[seatNumber - 1] = prompt("Enter your name:"); // Reserves the seat
+        alert("Reservation confirmed.");
+    } else {
+        console.log("Seat already taken."); // Alerts if seat is already reserved
+    }
+}
+
+// Function to cancel a reservation
+function cancelReservation() {
+    displayBuses(); // Displays all buses
+    const busId = parseInt(prompt("Select bus ID:"), 10); // Prompts for bus ID
+    const bus = buses.find(b => b.id === busId); // Finds the selected bus
+    if (!bus) {
+        console.log("Invalid bus ID."); // Alerts if bus ID is invalid
+        return;
+    }
+    const customerName = prompt("Enter your name:"); // Prompts for customer name
+    const seatIndex = bus.seats.findIndex(seat => seat === customerName); // Finds the reserved seat
+    if (seatIndex !== -1) {
+        if (confirm("Are you sure you want to cancel this reservation?")) { // Confirms cancellation
+            bus.seats[seatIndex] = null; // Cancels the reservation
+            alert("Reservation cancelled.");
+        }
+    } else {
+        console.log("No reservation found."); // Alerts if no reservation exists
+    }
+}
+
+// Main program
+let role = prompt("Are you a TICKET PERSON or CUSTOMER?").toUpperCase(); // Prompts for user role
+while (!["TICKET PERSON", "CUSTOMER"].includes(role)) {
+    role = prompt("Please enter either TICKET PERSON or CUSTOMER.").toUpperCase(); // Re-prompts if input is invalid
+}
+
+if (role === "TICKET PERSON") { // Handles ticket person actions
+    let loggedIn = false;
+    while (!loggedIn) {
+        const user = prompt("Enter username:"); // Prompts for username
+        const password = prompt("Enter password:"); // Prompts for password
+        if (authenticate(user, password)) {
+            loggedIn = true; // Logs in the ticket person
+            alert("Login successful!");
+            let action;
+            do {
+                action = prompt("Choose action: LOGOUT, VIEW, MANAGE").toUpperCase(); // Prompts for action
+                switch (action) {
+                    case "VIEW":
+                        buses.forEach(bus => displayBusSeats(bus)); // Displays all buses
+                        alert("Successfully viewed buses.");
+                        break;
+                    case "MANAGE":
+                        const busId = parseInt(prompt("Enter bus ID to manage:"), 10); // Prompts for bus ID
+                        manageBus(busId); // Manages the selected bus
+                        break;
+                }
+            } while (action !== "LOGOUT"); // Loops until "LOGOUT" is selected
+            alert("Successfully logged out.");
+        } else {
+            console.log("Invalid credentials. Try again."); // Alerts if credentials are invalid
+        }
+    }
+} else if (role === "CUSTOMER") { // Handles customer actions
+    customer();
+    alert("Thank you! Returning to the main menu.");
+}
